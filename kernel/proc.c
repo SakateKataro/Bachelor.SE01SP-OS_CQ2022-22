@@ -169,7 +169,9 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+  p->trace_mask = 0; // Clear trace mask when freeing proc
 }
+
 
 // Create a user page table for a given process, with no user memory,
 // but with trampoline and trapframe pages.
@@ -322,6 +324,7 @@ fork(void)
   np->state = RUNNABLE;
   release(&np->lock);
 
+  np->trace_mask = p->trace_mask; // Copy trace mask from parent to the child process
   return pid;
 }
 
@@ -692,4 +695,20 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+
+
+int
+proc_count(void)
+{
+    struct proc *p;
+    int count = 0;
+
+    for(p = proc; p < &proc[NPROC]; p++) {
+        if(p->state != UNUSED)
+            count++;
+    }
+
+    return count;
 }
